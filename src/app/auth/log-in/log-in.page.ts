@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
@@ -23,9 +23,12 @@ export class LogInPage implements OnInit {
   ngOnInit() {
   }
 
-  onLogIn(){
-    this.authService.logIn();
-    this.router.navigateByUrl('/workout-log');
+  onLogIn(form: NgForm){
+    console.log(form);
+    /* this.authService.logIn();
+    this.router.navigateByUrl('/workout-log'); */
   }
 
 }
+
+// 9 4.4 !!!!!!!!!!!!!!!!!!!!
