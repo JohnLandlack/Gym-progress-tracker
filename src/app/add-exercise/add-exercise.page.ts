@@ -31,7 +31,7 @@ exercises = [
         {
         name: 'sets',
         type: 'number',
-        placeholder: 'Series'
+        placeholder: 'sets'
       },
       {
         name:'reps',

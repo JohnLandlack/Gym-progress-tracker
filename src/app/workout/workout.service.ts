@@ -65,6 +65,29 @@ deleteExercise(id: string) {
   );
 }
 
+updateExercise(
+  id: string, 
+  name: string, 
+  sets: number, 
+  reps: number, 
+  weight: number
+) {
+  // Pakujemo nove podatke u objekat (datum stavljamo novi, ili ga možeš izbaciti ako ti ne treba)
+  const updatedExercise = {
+    name: name,
+    sets: sets,
+    reps: reps,
+    weight: weight,
+    userId: 'test-user-id' // Ovo i dalje držimo dok ne uradimo logovanje
+  };
+
+  // Koristimo PUT da pregazimo stare podatke na tačnom ID-u
+  return this.http.put(
+    `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/exercises/${id}.json`,
+    updatedExercise
+  );
+}
+
 
 
 

@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, LoadingController } from '@ionic/angular';
+import { AuthService } from '../auth.service';
+import { Route, Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
@@ -21,7 +23,10 @@ export class RegisterPage implements OnInit {
 
 
 
-  constructor() { }
+  constructor(private authService: AuthService, private loadingCtrl: LoadingController,
+    private router: Router) { 
+
+    }
   ngOnInit() {
 
     this.registerForm = new FormGroup({
@@ -40,13 +45,17 @@ export class RegisterPage implements OnInit {
 
     onRegister() {
 
-      console.log(this.registerForm);
-
+      this.loadingCtrl.create({message: "Registering..."}).then((loadingEl) =>{
+        loadingEl.present();
+        this.authService.register(this.registerForm.value).subscribe(resData => {
+        console.log('Registracija uspela');
+        console.log(resData);
+        loadingEl.dismiss();
+        this.router.navigateByUrl('/workout-log');
+      });
+      });
+      
 
     }
 
-   
-
-
-   
 }

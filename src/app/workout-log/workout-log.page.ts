@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { WorkoutService } from '../workout/workout.service';
 import { Exercise } from '../workout/exercise.model';
+import { AlertController } from '@ionic/angular';
 
 
 
@@ -15,7 +16,7 @@ export class WorkoutLogPage implements OnInit, OnDestroy {
   loadedExercises: Exercise[] = [];
   isLoading = false;
 
-  constructor(private workoutService: WorkoutService) {
+  constructor(private workoutService: WorkoutService, private alertController: AlertController) {
     console.log('constructor');
    }
 
@@ -29,6 +30,64 @@ export class WorkoutLogPage implements OnInit, OnDestroy {
     
     console.log('Trening uspešno obrisan!');
   });
+}
+
+async onEdit(ex: Exercise, slidingItem: any) {
+  
+  slidingItem.close();
+
+  
+  const alert = await this.alertController.create({
+    header: `Izmeni: ${ex.name}`, // Ime vežbe ide u naslov! Nema kucanja.
+    inputs: [
+      {
+        name: 'sets',
+        type: 'number',
+        value: ex.sets, 
+        placeholder: 'sets'
+      },
+      {
+        name: 'reps',
+        type: 'number',
+        value: ex.reps, 
+        placeholder: 'reps'
+      },
+      {
+        name: 'weight',
+        type: 'number',
+        value: ex.weight, 
+        placeholder: 'weight (kg)'
+      }
+    ],
+    buttons: [
+      {
+        text: 'Cancel',
+        role: 'cancel'
+      },
+      {
+        text: 'Save',
+        handler: (data) => {
+          
+          this.workoutService.updateExercise(ex.id, ex.name, +data.sets, +data.reps, +data.weight).subscribe(() => {
+            
+            // azuriranje niza vidljiv na ekranu
+            const index = this.loadedExercises.findIndex(e => e.id === ex.id);
+            if (index > -1) {
+              this.loadedExercises[index] = {
+                ...this.loadedExercises[index],
+                sets: data.sets,
+                reps: data.reps,
+                weight: data.weight
+              };
+            }
+            console.log('Uspesna izmena!');
+          });
+        }
+      }
+    ]
+  });
+
+  await alert.present();
 }
 
 

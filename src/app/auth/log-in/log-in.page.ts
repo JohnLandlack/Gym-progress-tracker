@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { AlertController, IonicModule } from '@ionic/angular';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 
@@ -17,16 +17,41 @@ import { Router } from '@angular/router';
   ]
 })
 export class LogInPage implements OnInit {
+  isLoading = false;
+  constructor(private authService : AuthService, private router : Router,
+    private alertCtrl: AlertController) {
 
-  constructor(private authService : AuthService, private router : Router) { }
+     }
 
   ngOnInit() {
   }
 
-  onLogIn(form: NgForm){
-    console.log(form);
-    /* this.authService.logIn();
-    this.router.navigateByUrl('/workout-log'); */
+  onLogIn(logInForm: NgForm){
+    console.log(logInForm);
+    if(logInForm.valid){
+      this.authService.logIn(logInForm.value).subscribe(resData =>{
+        console.log('prijava uspesna');
+        console.log(resData);
+        this.router.navigateByUrl('/workout-log');
+      },
+      errRes =>{
+        console.log(errRes);
+        this.isLoading=false;
+        let message ="Incorrect email or password";
+
+        
+
+        this.alertCtrl.create({
+          header: 'Authentication failed',
+          message,
+          buttons:['Okay']
+        }).then((alert) =>{
+          alert.present();
+        });
+
+      });
+    }
+    
   }
 
 }
