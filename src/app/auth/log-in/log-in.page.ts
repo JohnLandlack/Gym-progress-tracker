@@ -18,41 +18,48 @@ import { Router } from '@angular/router';
 })
 export class LogInPage implements OnInit {
   isLoading = false;
-  constructor(private authService : AuthService, private router : Router,
-    private alertCtrl: AlertController) {
 
-     }
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private alertCtrl: AlertController
+  ) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
-  onLogIn(logInForm: NgForm){
+  onLogIn(logInForm: NgForm) {
+    if (!logInForm.valid) {
+      return; // Ako forma nije validna, prekidamo akciju odmah
+    }
+
+    this.isLoading = true;
     console.log(logInForm);
-    if(logInForm.valid){
-      this.authService.logIn(logInForm.value).subscribe(resData =>{
-        console.log('prijava uspesna');
+    
+    
+    this.authService.login(logInForm.value).subscribe({
+      
+      
+      next: (resData: any) => {
+        console.log('Prijava uspesna');
         console.log(resData);
+        this.isLoading = false; 
         this.router.navigateByUrl('/workout-log');
       },
-      errRes =>{
-        console.log(errRes);
-        this.isLoading=false;
-        let message ="Incorrect email or password";
+      
+      
+      error: (errRes: any) => {
+        console.log('Error:', errRes);
+        this.isLoading = false;
 
-        
-
+        // Pravimo alert koji iskače kad se unese pogrešna šifra/email
         this.alertCtrl.create({
           header: 'Authentication failed',
-          message,
-          buttons:['Okay']
-        }).then((alert) =>{
+          message: 'Invalid email or password. Please try again.',
+          buttons: ['Okay']
+        }).then((alert) => {
           alert.present();
         });
-
-      });
-    }
-    
+      }
+    }); 
   }
-
 }
-

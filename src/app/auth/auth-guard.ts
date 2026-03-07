@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { take, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -7,17 +9,20 @@ import { AuthService } from './auth.service';
 })
 export class AuthGuard implements CanActivate {
 
-  constructor(
-    private authService: AuthService, 
-    private router: Router
-  ) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(): boolean {
-    if (this.authService.userIsAuthenticated) {
-      return true;
-    } else {
-      this.router.navigateByUrl('/log-in');
-      return false;
-    }
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    
+    return this.authService.isUserAuthenticated.pipe(
+      take(1),
+      tap(isAuthenticated => {
+        if (!isAuthenticated) {
+          this.router.navigateByUrl('/log-in');
+        }
+      })
+    );
   }
+  
 }

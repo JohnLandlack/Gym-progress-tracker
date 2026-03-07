@@ -2,8 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { WorkoutService } from '../workout/workout.service';
 import { Exercise } from '../workout/exercise.model';
 import { AlertController } from '@ionic/angular';
-
-
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-workout-log',
@@ -15,8 +14,9 @@ export class WorkoutLogPage implements OnInit, OnDestroy {
 
   loadedExercises: Exercise[] = [];
   isLoading = false;
+  authService: any;
 
-  constructor(private workoutService: WorkoutService, private alertController: AlertController) {
+  constructor(private workoutService: WorkoutService, private alertController: AlertController, private router: Router) {
     console.log('constructor');
    }
 
@@ -97,6 +97,10 @@ async onEdit(ex: Exercise, slidingItem: any) {
     console.log('ngOnInit');
 
 
+  }
+
+  onLogout() {
+    this.authService.logout();
   }
 
   ionViewWillEnter(){
