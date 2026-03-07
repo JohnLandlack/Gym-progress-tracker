@@ -1,6 +1,13 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>log-in</ion-title>
+    <ion-title>Log-in</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button (click)="goToRegister()">
+        <ion-chip [outline]="true" color="white">Register</ion-chip>
+      </ion-button>
+    </ion-buttons>
+
   </ion-toolbar>
 </ion-header>
 

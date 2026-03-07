@@ -35,7 +35,7 @@
               <ion-icon name="barbell-outline" slot="start" color="tertiary"></ion-icon>
               <ion-label>
                 <h2><strong>{{ ex.name }}</strong></h2>
-                <p>{{ ex.sets }} serija x {{ ex.reps }} ponavljanja</p>
+                <p>{{ ex.sets }} sets x {{ ex.reps }} reps</p>
               </ion-label>
               <ion-badge color="success" slot="end">{{ ex.weight }} kg</ion-badge>
             </ion-item>
@@ -52,7 +52,7 @@
           </ion-item-sliding>
         } @empty {
           <div class="ion-text-center ion-margin-top">
-            <p>Nema unetih treninga.</p>
+            <p>No workouts entered</p>
           </div>
         }
       </ion-list>

@@ -4,6 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { IonicModule, LoadingController } from '@ionic/angular';
 import { AuthService } from '../auth.service';
 import { Route, Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-register',
@@ -24,14 +25,14 @@ export class RegisterPage implements OnInit {
 
 
   constructor(private authService: AuthService, private loadingCtrl: LoadingController,
-    private router: Router) { 
+    private router: Router, private navCtrl: NavController) { 
 
     }
   ngOnInit() {
 
     this.registerForm = new FormGroup({
 
-      name: new FormControl('Jovan', Validators.required),
+      name: new FormControl(null, Validators.required),
       surname: new FormControl(null, Validators.required),
       email: new FormControl(null, [Validators.required, Validators.email]),
       password: new FormControl(null, [Validators.required, Validators.minLength(7)])
@@ -57,5 +58,11 @@ export class RegisterPage implements OnInit {
       
 
     }
+
+    onBack() {
+    this.navCtrl.back();
+  }
+
+
 
 }

@@ -1,94 +1,148 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Exercise } from './exercise.model';
-import { map } from 'rxjs/operators';
+import { map, switchMap, take, tap } from 'rxjs/operators';
+import { AuthService } from '../auth/auth.service';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WorkoutService {
+  private _exercises = new BehaviorSubject<Exercise[]>([]);
 
-  constructor(private http: HttpClient) { }
+  get exercises() {
+    return this._exercises.asObservable();
+  }
 
-  // Ova funkcija će primati podatke sa tvoje forme
-  addExercise(name: string, sets: number, reps: number, weight: number) {
-    
-    // 1. Pakujemo podatke u jedan objekat (po onom tvom modelu)
-    const newExercise: Exercise = {
-      id: Math.random().toString(), // Privremeni ID, Firebase će nam dati pravi kasnije
-      name: name,
-      sets: sets,
-      reps: reps,
-      weight: weight,
-      date: new Date(),
-      userId: 'test-user-id' // Privremeni ID korisnika dok ne povežemo pravi login
-    };
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
-    return this.http.post<{ name: string}>(
-      'https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/exercise.json',
-      newExercise
+  fetchExercises() {
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.authService.userId.pipe(
+          take(1),
+          switchMap(userId => {
+            return this.http.get<{ [key: string]: any }>(
+              `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/users/${userId}/exercises.json?auth=${token}`
+            );
+          }),
+          map(resData => {
+            const exercises: Exercise[] = [];
+            for (const key in resData) {
+              if (resData.hasOwnProperty(key)) {
+                exercises.push(
+                  new Exercise(
+                    key, 
+                    resData[key].name, 
+                    +resData[key].sets, 
+                    +resData[key].reps, 
+                    +resData[key].weight, 
+                    new Date(resData[key].date), 
+                    resData[key].userId
+                  )
+                );
+              }
+            }
+            return exercises;
+          }),
+          tap(exercises => {
+            this._exercises.next(exercises);
+          })
+        );
+      })
     );
   }
 
-  fetchExercises() {
-  return this.http.get<{ [key: string]: any }>(  //odavde kupim informacije sa baze i prikazujem na ekranu
-    'https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/exercise.json'
-  ).pipe(
-    map(resData => {
-      const exercisesArray: any[] = [];
-      // prolazimo kroz svaki onaj nasumicni kod u Firebase-u
+  addExercise(name: string, sets: number, reps: number, weight: number) {
+    let generatedId: string;
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.authService.userId.pipe(
+          take(1),
+          switchMap(userId => {
+            if (!userId) throw new Error('Korisnik nije pronađen!');
+            
+            generatedId = new Date().getTime().toString();
+            const newExercise = new Exercise(
+              generatedId,
+              name,
+              sets,
+              reps,
+              weight,
+              new Date(),
+              userId
+            );
 
+            return this.http.put(
+              `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/users/${userId}/exercises/${generatedId}.json?auth=${token}`,
+              newExercise
+            );
+          }),
+          switchMap(() => this.exercises),
+          take(1),
+          tap(exercises => {
+            const newEx = new Exercise(generatedId, name, sets, reps, weight, new Date(), '');
+            this._exercises.next(exercises.concat(newEx));
+          })
+        );
+      })
+    );
+  }
 
-      for (const key in resData) {
-        if (resData.hasOwnProperty(key)) {
-          // pakujemo ga u nas niz i dodajemo taj kod kao 'id'
-          exercisesArray.push({
-            id: key, 
-            name: resData[key].name,
-            sets: resData[key].sets,
-            reps: resData[key].reps,
-            weight: resData[key].weight,
-            date: resData[key].date,
-            userId: resData[key].userId
-          });
-        }
-      }
-      return exercisesArray; // vracamo cist niz spreman za prikaz
-    })
-  );
-}
+  deleteExercise(exerciseId: string) {
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.authService.userId.pipe(
+          take(1),
+          switchMap(userId => {
+            return this.http.delete(
+              `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/users/${userId}/exercises/${exerciseId}.json?auth=${token}`
+            );
+          }),
+          switchMap(() => this.exercises),
+          take(1),
+          tap(exercises => {
+            this._exercises.next(exercises.filter(ex => ex.id !== exerciseId));
+          })
+        );
+      })
+    );
+  }
 
-deleteExercise(id: string) {
-  
-  return this.http.delete(
-    `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/exercise/${id}.json`
-  );
-}
-
-updateExercise(
-  id: string, 
-  name: string, 
-  sets: number, 
-  reps: number, 
-  weight: number
-) {
-  // Pakujemo nove podatke u objekat (datum stavljamo novi, ili ga možeš izbaciti ako ti ne treba)
-  const updatedExercise = {
-    name: name,
-    sets: sets,
-    reps: reps,
-    weight: weight,
-    userId: 'test-user-id' // Ovo i dalje držimo dok ne uradimo logovanje
-  };
-
-  // Koristimo PUT da pregazimo stare podatke na tačnom ID-u
-  return this.http.put(
-    `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/exercises/${id}.json`,
-    updatedExercise
-  );
-}
-
-
-
-
+  updateExercise(id: string, name: string, sets: number, reps: number, weight: number) {
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.authService.userId.pipe(
+          take(1),
+          switchMap(userId => {
+            const updatedExercise = {
+              name: name,
+              sets: sets,
+              reps: reps,
+              weight: weight,
+              userId: userId,
+              date: new Date()
+            };
+            return this.http.put(
+              `https://gym-progress-tracker-537cb-default-rtdb.europe-west1.firebasedatabase.app/users/${userId}/exercises/${id}.json?auth=${token}`,
+              updatedExercise
+            );
+          }),
+          switchMap(() => this.exercises),
+          take(1),
+          tap(exercises => {
+            const updatedIndex = exercises.findIndex(ex => ex.id === id);
+            const updatedArray = [...exercises];
+            updatedArray[updatedIndex] = new Exercise(id, name, sets, reps, weight, new Date(), '');
+            this._exercises.next(updatedArray);
+          })
+        );
+      })
+    );
+  }
 }

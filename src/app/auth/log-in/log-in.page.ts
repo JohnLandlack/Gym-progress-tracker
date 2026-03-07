@@ -25,6 +25,21 @@ export class LogInPage implements OnInit {
     private alertCtrl: AlertController
   ) {}
 
+  goToRegister() {
+  console.log('Dugme kliknuto, pokrećem navigaciju...');
+
+  // 3. Ručno šaljemo korisnika na register
+  this.router.navigateByUrl('/register').then(success => {
+    if (success) {
+      console.log('Uspelo! Stigli smo na Register.');
+    } else {
+      console.error('Navigacija je odbijena! Proveri AppRoutingModule ili Guars.');
+    }
+  }).catch(err => {
+    console.error('DESIO SE ERROR:', err);
+  });
+}
+
   ngOnInit() {}
 
   onLogIn(logInForm: NgForm) {

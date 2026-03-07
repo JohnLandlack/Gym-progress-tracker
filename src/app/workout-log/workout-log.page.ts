@@ -3,6 +3,7 @@ import { WorkoutService } from '../workout/workout.service';
 import { Exercise } from '../workout/exercise.model';
 import { AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { AuthService } from '../auth/auth.service'; 
 
 @Component({
   selector: 'app-workout-log',
@@ -11,124 +12,99 @@ import { Router } from '@angular/router';
   standalone: false,
 })
 export class WorkoutLogPage implements OnInit, OnDestroy {
-
   loadedExercises: Exercise[] = [];
   isLoading = false;
-  authService: any;
 
-  constructor(private workoutService: WorkoutService, private alertController: AlertController, private router: Router) {
+  
+  constructor(
+    private workoutService: WorkoutService, 
+    private alertController: AlertController, 
+    private router: Router,
+    private authService: AuthService 
+  ) {
     console.log('constructor');
-   }
+  }
 
-   onDelete(exerciseId: string, slidingItem: any) {
-
-  slidingItem.close();
-
-  this.workoutService.deleteExercise(exerciseId).subscribe(() => {
-    
-    this.loadedExercises = this.loadedExercises.filter(ex => ex.id !== exerciseId);
-    
-    console.log('Trening uspešno obrisan!');
-  });
-}
-
-async onEdit(ex: Exercise, slidingItem: any) {
-  
-  slidingItem.close();
-
-  
-  const alert = await this.alertController.create({
-    header: `Izmeni: ${ex.name}`, // Ime vežbe ide u naslov! Nema kucanja.
-    inputs: [
-      {
-        name: 'sets',
-        type: 'number',
-        value: ex.sets, 
-        placeholder: 'sets'
+  onDelete(exerciseId: string, slidingItem: any) {
+    slidingItem.close();
+    this.workoutService.deleteExercise(exerciseId).subscribe({
+      next: () => {
+        
+        this.loadedExercises = this.loadedExercises.filter(ex => ex.id !== exerciseId);
+        console.log('Trening uspešno obrisan!');
       },
-      {
-        name: 'reps',
-        type: 'number',
-        value: ex.reps, 
-        placeholder: 'reps'
-      },
-      {
-        name: 'weight',
-        type: 'number',
-        value: ex.weight, 
-        placeholder: 'weight (kg)'
+      error: (err) => {
+        console.error('GREŠKA PRI BRISANJU:', err);
       }
-    ],
-    buttons: [
-      {
-        text: 'Cancel',
-        role: 'cancel'
-      },
-      {
-        text: 'Save',
-        handler: (data) => {
-          
-          this.workoutService.updateExercise(ex.id, ex.name, +data.sets, +data.reps, +data.weight).subscribe(() => {
+    });
+  }
+
+  async onEdit(ex: Exercise, slidingItem: any) {
+    slidingItem.close();
+
+    const alert = await this.alertController.create({
+      header: `Izmeni: ${ex.name}`,
+      inputs: [
+        { name: 'sets', type: 'number', value: ex.sets, placeholder: 'sets' },
+        { name: 'reps', type: 'number', value: ex.reps, placeholder: 'reps' },
+        { name: 'weight', type: 'number', value: ex.weight, placeholder: 'weight (kg)' }
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Save',
+          handler: (data) => {
             
-            // azuriranje niza vidljiv na ekranu
-            const index = this.loadedExercises.findIndex(e => e.id === ex.id);
-            if (index > -1) {
-              this.loadedExercises[index] = {
-                ...this.loadedExercises[index],
-                sets: data.sets,
-                reps: data.reps,
-                weight: data.weight
-              };
-            }
-            console.log('Uspesna izmena!');
-          });
+            this.workoutService.updateExercise(ex.id, ex.name, +data.sets, +data.reps, +data.weight).subscribe(() => {
+              const index = this.loadedExercises.findIndex(e => e.id === ex.id);
+              if (index > -1) {
+                
+                this.loadedExercises[index] = new Exercise(
+                  ex.id,
+                  ex.name,
+                  +data.sets,
+                  +data.reps,
+                  +data.weight,
+                  ex.date,
+                  ex.userId
+                );
+              }
+              console.log('Uspešna izmena!');
+            });
+          }
         }
-      }
-    ]
-  });
+      ]
+    });
 
-  await alert.present();
-}
-
-
+    await alert.present();
+  }
 
   ngOnInit() {
-
     console.log('ngOnInit');
-
-
   }
 
   onLogout() {
-    this.authService.logout();
+    this.authService.logOut(); 
+    this.router.navigateByUrl('/log-in'); 
   }
 
-  ionViewWillEnter(){
+  ionViewWillEnter() {
     this.isLoading = true;
-    this.workoutService.fetchExercises().subscribe(exercises => {
-
-      this.loadedExercises = exercises;
-      this.isLoading = false;
-      console.log('Ucitane vezbe:', this.loadedExercises); //gledamo u konzoli sta je stiglo
+    this.workoutService.fetchExercises().subscribe({
+      next: (exercises: Exercise[]) => {
+        this.loadedExercises = exercises;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.isLoading = false;
+      }
     });
-
-    console.log('ionViewWillEnter');
   }
 
-  ionViewDidEnter(){
-    console.log('ionViewDidEnter');
-  }
-
-  ionViewWillLeave(){
-    console.log('ionViewWillLeave');
-  }
-
-  ionViewDidLeave(){
-    console.log('ionViewDidLeave');
-  }
-
-  ngOnDestroy(){
-    console.log('ngOnDestroy');
-  }
-
+  
+  ionViewDidEnter() { console.log('ionViewDidEnter'); }
+  ionViewWillLeave() { console.log('ionViewWillLeave'); }
+  ionViewDidLeave() { console.log('ionViewDidLeave'); }
+  ngOnDestroy() { console.log('ngOnDestroy'); }
 }

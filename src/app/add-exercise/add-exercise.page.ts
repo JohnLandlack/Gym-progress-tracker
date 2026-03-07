@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AlertController } from '@ionic/angular';
 import { WorkoutService } from '../workout/workout.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-add-exercise',
@@ -19,7 +20,7 @@ exercises = [
     { name: 'Dips', image: 'assets/exercise/dips.jpg', muscle: 'Triceps' }
   ]; // ovde zapravo dodajem vezbe a on mi kroz ngFor ucitava ove vezbe i prikazuje ih
 
-  constructor(private alertCtrl: AlertController, private workoutService: WorkoutService) {
+  constructor(private alertCtrl: AlertController, private workoutService: WorkoutService, private router: Router) {
     console.log('constructor');
   }
 
@@ -64,16 +65,21 @@ exercises = [
     await alert.present();
   }
 
-  saveToFirebase(name: string, data: any) {
+ saveToFirebase(name: string, data: any) {
   this.workoutService.addExercise(
     name,
     +data.sets,
     +data.reps,
     +data.weight
-  ).subscribe(res => {
-    console.log('Upisano u Firebase!', res);
-    // Opciono: navigacija na log
-    // this.router.navigate(['/workout-log']);
+  ).subscribe({
+    next: (res) => {
+      console.log('Upisano u Firebase!', res);
+    },
+    error: (err) => {
+      
+      console.error('Firebase odbija zahtev:', err);
+      alert('Došlo je do greške, pogledaj konzolu!');
+    }
   });
 }
 
